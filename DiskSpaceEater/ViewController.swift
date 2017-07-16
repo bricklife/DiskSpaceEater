@@ -19,10 +19,6 @@ class ViewController: UITableViewController {
     
     let targetUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     
-    var eater: DiskSpaceEater {
-        return DiskSpaceEater(targetUrl: targetUrl)
-    }
-    
     let numberFormatter: NumberFormatter = {
         let numberFormatter = NumberFormatter()
         numberFormatter.numberStyle = .decimal
@@ -62,9 +58,10 @@ class ViewController: UITableViewController {
                 return
         }
         
+        let eater = DiskSpaceEater(targetUrl: targetUrl)
         DispatchQueue.global(qos: .default).async { [weak self] in
             do {
-                try self?.eater.createEmptyFiles(fileSize: fileSize, num: num)
+                try eater.createEmptyFiles(fileSize: fileSize, num: num)
                 self?.show(message: "Created \(num) files")
             } catch (let error) {
                 self?.show(message: "Error: \(error)")
@@ -73,11 +70,14 @@ class ViewController: UITableViewController {
     }
     
     func deleteAllFiles() {
-        do {
-            let num = try self.eater.deleteAllFiles()
-            show(message: "Deleted \(num) files")
-        } catch (let error) {
-            show(message: "Error: \(error)")
+        let eater = DiskSpaceEater(targetUrl: targetUrl)
+        DispatchQueue.global(qos: .default).async { [weak self] in
+            do {
+                let num = try eater.deleteAllFiles()
+                self?.show(message: "Deleted \(num) files")
+            } catch (let error) {
+                self?.show(message: "Error: \(error)")
+            }
         }
     }
     
