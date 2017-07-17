@@ -18,10 +18,12 @@ struct DiskSpaceEater {
     
     let targetUrl: URL
     
-    func createEmptyFiles(fileSize: Int, num: Int) throws {
-        for _ in 0..<num {
+    func createEmptyFiles(fileSize: Int, num: Int, progress: ((Float) -> Void)? = nil) throws {
+        progress?(0)
+        for n in 1...num {
             let filename = UUID().uuidString
             try createEmptyFile(filename: filename, targetSize: fileSize)
+            progress?(Float(n) / Float(num))
         }
     }
     
@@ -49,10 +51,12 @@ struct DiskSpaceEater {
         }
     }
 
-    func deleteAllFiles() throws -> Int {
+    func deleteAllFiles(progress: ((Float) -> Void)? = nil) throws -> Int {
         let urls = try FileManager.default.contentsOfDirectory(at: targetUrl, includingPropertiesForKeys: nil)
-        for url in urls {
+        progress?(0)
+        for (index, url) in urls.enumerated() {
             try FileManager.default.removeItem(at: url)
+            progress?(Float(index + 1) / Float(urls.count))
         }
         return urls.count
     }

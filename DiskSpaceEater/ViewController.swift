@@ -16,6 +16,11 @@ class ViewController: UITableViewController {
     
     @IBOutlet weak var fileSizeTextField: UITextField!
     @IBOutlet weak var numberOfFilesTextField: UITextField!
+    @IBOutlet weak var createButton: UIButton!
+    @IBOutlet weak var creatingProgressView: UIProgressView!
+    
+    @IBOutlet weak var deleteButton: UIButton!
+    @IBOutlet weak var deletingProgressView: UIProgressView!
     
     let targetUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     
@@ -44,6 +49,26 @@ class ViewController: UITableViewController {
         percentageLabel.text = string(percentage: info?.freeSpace) ?? "-"
     }
     
+    func setCreatingProgress(_ progress: Float?) {
+        DispatchQueue.main.async { [weak self] in
+            let progressing = (progress != nil)
+            self?.deleteButton.isEnabled = !progressing
+            self?.createButton.isHidden = progressing
+            self?.creatingProgressView.isHidden = !progressing
+            self?.creatingProgressView.setProgress(progress ?? 0, animated: true)
+        }
+    }
+    
+    func setDeletingProgress(_ progress: Float?) {
+        DispatchQueue.main.async { [weak self] in
+            let progressing = (progress != nil)
+            self?.createButton.isEnabled = !progressing
+            self?.deleteButton.isHidden = progressing
+            self?.deletingProgressView.isHidden = !progressing
+            self?.deletingProgressView.setProgress(progress ?? 0, animated: true)
+        }
+    }
+    
     func show(message: String) {
         DispatchQueue.main.async { [weak self] in
             let alert = UIAlertController(title: "", message: message, preferredStyle: .alert)
@@ -61,9 +86,13 @@ class ViewController: UITableViewController {
         let eater = DiskSpaceEater(targetUrl: targetUrl)
         DispatchQueue.global(qos: .default).async { [weak self] in
             do {
-                try eater.createEmptyFiles(fileSize: fileSize, num: num)
+                try eater.createEmptyFiles(fileSize: fileSize, num: num) { [weak self] progress in
+                    self?.setCreatingProgress(progress)
+                }
+                self?.setCreatingProgress(nil)
                 self?.show(message: "Created \(num) files")
             } catch (let error) {
+                self?.setCreatingProgress(nil)
                 self?.show(message: "Error: \(error)")
             }
         }
@@ -73,9 +102,13 @@ class ViewController: UITableViewController {
         let eater = DiskSpaceEater(targetUrl: targetUrl)
         DispatchQueue.global(qos: .default).async { [weak self] in
             do {
-                let num = try eater.deleteAllFiles()
+                let num = try eater.deleteAllFiles() { [weak self] progress in
+                    self?.setDeletingProgress(progress)
+                }
+                self?.setDeletingProgress(nil)
                 self?.show(message: "Deleted \(num) files")
             } catch (let error) {
+                self?.setDeletingProgress(nil)
                 self?.show(message: "Error: \(error)")
             }
         }
@@ -96,6 +129,9 @@ class ViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        setCreatingProgress(nil)
+        setDeletingProgress(nil)
         
         Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             self?.updateLabels()
