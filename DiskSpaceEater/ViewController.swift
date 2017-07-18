@@ -86,7 +86,7 @@ class ViewController: UITableViewController {
         let eater = DiskSpaceEater(targetUrl: targetUrl)
         DispatchQueue.global(qos: .default).async { [weak self] in
             do {
-                try eater.createEmptyFiles(fileSize: fileSize, num: num) { [weak self] progress in
+                try eater.createEmptyFiles(fileSize: fileSize, num: num) { progress in
                     self?.setCreatingProgress(progress)
                 }
                 self?.setCreatingProgress(nil)
@@ -102,7 +102,7 @@ class ViewController: UITableViewController {
         let eater = DiskSpaceEater(targetUrl: targetUrl)
         DispatchQueue.global(qos: .default).async { [weak self] in
             do {
-                let num = try eater.deleteAllFiles() { [weak self] progress in
+                let num = try eater.deleteAllFiles() { progress in
                     self?.setDeletingProgress(progress)
                 }
                 self?.setDeletingProgress(nil)
